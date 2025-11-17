@@ -1,4 +1,5 @@
 #include<trimmer.h>
+
 int trim_read_by_quality(char* sequence, char* quality){
     int og_length=strlen(sequence);
     if(og_length<TRIM_WINDOW_SIZE){
