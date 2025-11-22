@@ -17,5 +17,8 @@
 #define WEAK_THRESHOLD 3
 #define STRONG_THRESHOLD 5
 #define STRONG_MARGIN 1
+#define MATCH_SCORE 5
+#define MISMATCH_PENALTY -4
+#define GAP_OPEN_PENALTY -10
 
 #endif
