@@ -20,5 +20,6 @@
 #define MATCH_SCORE 5
 #define MISMATCH_PENALTY -4
 #define GAP_OPEN_PENALTY -10
+#define HISTOGRAM_BINS 10
 
 #endif
