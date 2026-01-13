@@ -5,7 +5,14 @@ TARGET = bin/genvi
 SRCDIR = src
 OBJDIR = obj
 INCDIR = include
-SRCS = $(wildcard $(SRCDIR)/*.c)
+SRCS = $(SRCDIR)/main.c \
+       $(SRCDIR)/parser.c \
+       $(SRCDIR)/trimmer.c \
+       $(SRCDIR)/trie.c \
+       $(SRCDIR)/hashtable.c \
+       $(SRCDIR)/aligner.c \
+       $(SRCDIR)/mapper.c \
+       $(SRCDIR)/statistics.c
 OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 DEPS = $(wildcard $(INCDIR)/*.h)
 all: $(TARGET)

@@ -54,11 +54,11 @@ char* load_genome_from_fasta(const char* filename, long* genome_length){
     char*final_genome_string=(char*)realloc(genome_string, current_position+1);
     if(final_genome_string==NULL){
         fprintf(stderr, "[Parser Warning] Could not shrink-to-fit.Using oversized buffer.\n");
-        genome_length=current_position;
+        *genome_length=current_position;
         return genome_string; 
     }
     
-    genome_length=current_position;
+    *genome_length=current_position;
     return final_genome_string;
 }
 

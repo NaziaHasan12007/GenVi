@@ -21,7 +21,7 @@ TrieNode* trie_create(){
     return n;
 }
 
-TrieNode* trie_free(TrieNode* root){
+void trie_free(TrieNode* root){
     if(!root){
         return;
     }
@@ -34,12 +34,12 @@ TrieNode* trie_free(TrieNode* root){
 }
 
 void trie_insert(TrieNode* root, const char* kmer){
-    size_t len;
-    TrieNode* current;
     if(!root || !kmer){
-        current=root;
-        len=strlen(kmer);
+        return;
     }
+    TrieNode* current=root;
+    size_t len=strlen(kmer);
+
     for(size_t i=0; i<len; i++){
        int index=dna_to_index(kmer[i]);
        if((current->children[index])==NULL){
@@ -56,12 +56,11 @@ void trie_insert(TrieNode* root, const char* kmer){
 }
 
 static TrieNode* trie_search_node(TrieNode* root, const char* kmer){
-    size_t len;
-    TrieNode* current;
     if(!root || !kmer){
-        current=root;
-        len=strlen(kmer);
+        return NULL;
     }
+    size_t len=strlen(kmer);
+    TrieNode* current=root;
     for(size_t i=0; i<len; i++){
        int index=dna_to_index(kmer[i]);
        if((current->children[index])==NULL){
@@ -125,7 +124,7 @@ static char find_strong_neighbor(TrieNode* root, char* kmer_buffer, int k){
     return '\0';
 }
 
-void analyze_and_correct_read(TrieNode* root, char* sequence){
+void analyze_and_correct_kmer(TrieNode* root, char* sequence){
     if(!root || !sequence){
       return;
     } 

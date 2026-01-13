@@ -9,7 +9,7 @@ HashTable* build_genome_index(const char* genome_string){
     }
     long genome_length=strlen(genome_string); 
     const int k=SEED_KMER_SIZE;
-    char kmer_buffer[k + 1];
+    char* kmer_buffer=malloc((k+1)*sizeof(char));
     printf("[Phase 1]Genome Length: %ld bases\n", genome_length);
     printf("[Phase 1]Indexing %ld k-mers (k=%d). This may take a moment...\n", genome_length-(k-1), k);
     for(long i=0; i<=genome_length-k; i++){
@@ -23,7 +23,7 @@ HashTable* build_genome_index(const char* genome_string){
     }
     printf("\n[Phase 1]Indexing complete.\n");
     return index;
-
+    free(kmer_buffer);
 }
 
 GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index, const char* genome_string, long genome_length){
@@ -56,8 +56,8 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
     unsigned long total_bases_sequenced=0;
     
     const int k=SEED_KMER_SIZE;
-    char kmer_buffer[k+1];
-    char seed_buffer[k+1];
+    char* kmer_buffer=malloc((k+1)*sizeof(char));
+    char* seed_buffer=malloc((k+1)*sizeof(char));
     const int ALIGNMENT_SCORE_THRESHOLD=(k*MATCH_SCORE)/2;
  
     while(read_fastq_to_string(fp, header, sequence, plus, quality)){
@@ -79,7 +79,7 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
                 kmer_buffer[k]='\0';
                 trie_insert(trie, kmer_buffer);
             }
-            analyze_and_correct_read(trie, sequence);
+            analyze_and_correct_kmer(trie, sequence);
         }
         char* clean_read_sequence=sequence;
         if(trimmed_length<k){
@@ -100,7 +100,7 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
                 continue; 
             }
             const char* genome_segment=genome_string+location;
-            int score=run_smith_waterman(clean_read_sequence, genome_segment);
+            int score=run_dp_sw(clean_read_sequence, genome_segment);
             if(score>ALIGNMENT_SCORE_THRESHOLD){
                 alignment_found=1;
                 for(int read_pos=0; read_pos<trimmed_length; read_pos++){
@@ -123,6 +123,8 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
     trie_free(trie);
     GenomicStats* stats=calculate_genomic_stats(coverage_map, genome_length, total_reads, reads_discarded, reads_failed_map, total_quality_sum, total_bases_sequenced, genome_string);
     free(coverage_map);
+    free(kmer_buffer);
+    free(seed_buffer);
     printf("[Phase 2/3]Mapping and statistics complete.\n");
     return stats;
 }

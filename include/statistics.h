@@ -1,4 +1,4 @@
-#ifndef STATISTIC_H
+#ifndef STATISTICS_H
 #define STATISTICS_H
 #include "basic.h"
 
