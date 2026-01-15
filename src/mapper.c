@@ -1,130 +1,162 @@
 #include "mapper.h"
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<math.h>
+
+#define MAX_SEED_HITS 50      
+#define REPETITIVE_SEED_THRESHOLD 20 
+#define EXTENSION_MARGIN 1.1   
+#define MAX_WINDOW_SIZE 2000
 
 HashTable* build_genome_index(const char* genome_string){
-    printf("[Phase 1]Creating new hash table index......\n");
-    HashTable* index=ht_create();
-    if(index==NULL){
-        fprintf(stderr, "[Phase 1]Hashtable build failed\n");
+    printf("[Phase 1]Creating genome index...\n");
+    HashTable* index=ht_create();  
+    if(!index){
+        fprintf(stderr, "[Phase 1]Failed to create hash table.\n");
         return NULL;
     }
-    long genome_length=strlen(genome_string); 
+    long genome_length=strlen(genome_string);
     const int k=SEED_KMER_SIZE;
-    char* kmer_buffer=malloc((k+1)*sizeof(char));
-    printf("[Phase 1]Genome Length: %ld bases\n", genome_length);
-    printf("[Phase 1]Indexing %ld k-mers (k=%d). This may take a moment...\n", genome_length-(k-1), k);
+    char* kmer_buffer=malloc(k+1);
+    if(!kmer_buffer){
+        fprintf(stderr, "[Phase 1] Failed to allocate kmer buffer.\n");
+        ht_free(index);
+        return NULL;
+    }
+    unsigned long repetitive_kmers = 0;
     for(long i=0; i<=genome_length-k; i++){
         strncpy(kmer_buffer, genome_string+i, k);
         kmer_buffer[k]='\0';
+        Ht_Node* existing=ht_search(index, kmer_buffer);
+        if(existing && existing->location_count>=REPETITIVE_SEED_THRESHOLD){
+            repetitive_kmers++;  
+            continue;
+        }
         ht_insert(index, kmer_buffer, (unsigned long)i);
         if(i>0 && i%100000==0){
-            printf("[Phase 1]Progress:%.2f%% \r", (double)i/genome_length*100.0);
+            printf("[Phase 1]Indexed %ld/%ld k-mers (%.2f%%)\r", i, genome_length - k, (double)i / (genome_length - k) * 100.0);
             fflush(stdout);
         }
     }
-    printf("\n[Phase 1]Indexing complete.\n");
-    return index;
+    printf("\n[Phase 1] Genome indexing complete. %lu repetitive seeds skipped.\n", repetitive_kmers);
     free(kmer_buffer);
+    return index;
 }
 
 GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index, const char* genome_string, long genome_length){
-    printf("  [Phase 2/3] Starting read processing and mapping...\n");
-    FILE* fp = open_fastq_file(fastq_filename);
-    if(fp==NULL){ return NULL; }
-    
+    FILE* fp=open_fastq_file(fastq_filename);
+    if(!fp){
+      return NULL;
+    } 
     unsigned long* coverage_map=(unsigned long*)calloc(genome_length, sizeof(unsigned long));
-    if(coverage_map==NULL){
-        fprintf(stderr,"[Mapper ERROR] Failed to allocate coverage map.\n");
+    if(!coverage_map){
+        fprintf(stderr, "[Mapper ERROR]Failed to allocate coverage_map\n");
         fclose(fp);
         return NULL;
     }
-    TrieNode* trie=trie_create();
-    if(trie==NULL){
-        fprintf(stderr,"[Mapper ERROR] Failed to create Trie.\n");
-        fclose(fp);
-        free(coverage_map);
-        return NULL;
-    }
+
     char header[MAX_LINE_LENGTH];
     char sequence[MAX_LINE_LENGTH];
     char plus[MAX_LINE_LENGTH];
     char quality[MAX_LINE_LENGTH];
-    
+    const int k=SEED_KMER_SIZE;
+    char* seed_buffer=malloc(k+1);
+
+    if(!seed_buffer){
+        fprintf(stderr, "[Mapper ERROR] Failed to allocate seed_buffer\n");
+        free(coverage_map);
+        fclose(fp);
+        return NULL;
+    }
+
+    int* buf_pre=malloc((MAX_WINDOW_SIZE+1)*sizeof(int));
+    int* buf_cur=malloc((MAX_WINDOW_SIZE+1)*sizeof(int));
+    if(!buf_pre || !buf_cur){
+        fprintf(stderr, "[Mapper ERROR] Failed to allocate DP buffers\n");
+        free(seed_buffer);
+        free(coverage_map);
+        fclose(fp);
+        return NULL;
+    }
+
     long total_reads=0;
     long reads_discarded=0;
     long reads_failed_map=0;
     unsigned long total_quality_sum=0;
     unsigned long total_bases_sequenced=0;
-    
-    const int k=SEED_KMER_SIZE;
-    char* kmer_buffer=malloc((k+1)*sizeof(char));
-    char* seed_buffer=malloc((k+1)*sizeof(char));
-    const int ALIGNMENT_SCORE_THRESHOLD=(k*MATCH_SCORE)/2;
- 
+
     while(read_fastq_to_string(fp, header, sequence, plus, quality)){
         total_reads++;
-        int raw_read_length=strlen(quality);
-        for(int i=0; i<raw_read_length; i++) {
+        int read_len=strlen(sequence);
+
+        for(int i=0; i<read_len; i++) {
             total_quality_sum+=((int)quality[i]-33);
         }
-        total_bases_sequenced+=raw_read_length;
+        total_bases_sequenced+=read_len;
 
-        int trimmed_length=trim_read_by_quality(sequence, quality);
-        if(trimmed_length<MIN_READ_LENGTH){
+        int trimmed_len=trim_read_by_quality(sequence, quality);
+        if(trimmed_len<MIN_READ_LENGTH){
             reads_discarded++;
             continue;
         }
-        if(trimmed_length>=k){
-            for(int i=0; i<=trimmed_length-k; i++){
-                strncpy(kmer_buffer, sequence+i, k);
-                kmer_buffer[k]='\0';
-                trie_insert(trie, kmer_buffer);
-            }
-            analyze_and_correct_kmer(trie, sequence);
-        }
-        char* clean_read_sequence=sequence;
-        if(trimmed_length<k){
-            reads_failed_map++;
-            continue;
-        }
-        strncpy(seed_buffer, clean_read_sequence, k);
-        seed_buffer[k]='\0';
-        Ht_Node* hits=ht_search(index, seed_buffer);
-        if(hits==NULL){
-            reads_failed_map++;
-            continue;
-        }
-        int alignment_found=0;
-        for(size_t i=0; i<hits->location_count; i++){
-            unsigned long location=hits->locations[i];
-            if(location+trimmed_length > genome_length){
-                continue; 
-            }
-            const char* genome_segment=genome_string+location;
-            int score=run_dp_sw(clean_read_sequence, genome_segment);
-            if(score>ALIGNMENT_SCORE_THRESHOLD){
-                alignment_found=1;
-                for(int read_pos=0; read_pos<trimmed_length; read_pos++){
-                    coverage_map[location+read_pos]++;
+
+        int best_score=0;
+        long best_loc=-1;
+        int max_window_len=(int)(trimmed_len*EXTENSION_MARGIN);
+
+        if(max_window_len>MAX_WINDOW_SIZE){
+           max_window_len=MAX_WINDOW_SIZE;
+        } 
+
+        for(int i=0; i<=trimmed_len-k; i+=k){
+            strncpy(seed_buffer, sequence+i, k);
+            seed_buffer[k]='\0';
+            Ht_Node* hits=ht_search(index, seed_buffer);
+            if(!hits){
+             continue;
+            } 
+            if(hits->location_count > REPETITIVE_SEED_THRESHOLD || hits->location_count > MAX_SEED_HITS){
+              continue;
+            } 
+
+            for(size_t h= 0; h< hits->location_count; h++) {
+                long loc=hits->locations[h];
+                long genome_start=loc - i;
+
+                if(genome_start<0||genome_start+max_window_len>genome_length){
+                   continue;
+                } 
+
+                int score=run_dp_sw(sequence, genome_string + genome_start, trimmed_len, max_window_len, buf_pre, buf_cur);
+                if(score>best_score){
+                    best_score=score;
+                    best_loc=genome_start;
                 }
-                break;
             }
         }
-        if(!alignment_found){ 
-            reads_failed_map++; 
+        const int ALIGNMENT_SCORE_THRESHOLD=(int)(trimmed_len * MATCH_SCORE * 0.7);
+        if(best_score>=ALIGNMENT_SCORE_THRESHOLD && best_loc>=0){
+            for(int j=0; j<trimmed_len; j++){
+                if(best_loc + j < genome_length)
+                    coverage_map[best_loc+j]++;
+            }
+        } 
+        else{
+            reads_failed_map++;
         }
-        if(total_reads % 10000==0){
-            printf("[Phase 2/3] Processed %ld reads... \r", total_reads);
+        if (total_reads%10000==0) {
+            printf("[Mapper] Processed %ld reads... \r", total_reads);
             fflush(stdout);
         }
     }
-    
     fclose(fp);
-    printf("\n[Phase 2/3]All %ld reads processed. Calculating final statistics...\n", total_reads);
-    trie_free(trie);
+    free(buf_pre);
+    free(buf_cur);
+    free(seed_buffer);
+    printf("\n[Mapper] Completed processing %ld reads.\n", total_reads);
+    printf("[Mapper] Reads discarded: %ld, failed to map: %ld\n", reads_discarded, reads_failed_map);
     GenomicStats* stats=calculate_genomic_stats(coverage_map, genome_length, total_reads, reads_discarded, reads_failed_map, total_quality_sum, total_bases_sequenced, genome_string);
     free(coverage_map);
-    free(kmer_buffer);
-    free(seed_buffer);
-    printf("[Phase 2/3]Mapping and statistics complete.\n");
     return stats;
 }

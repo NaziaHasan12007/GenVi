@@ -53,6 +53,7 @@ void trie_insert(TrieNode* root, const char* kmer){
           current->count++;
        }
     }
+    current->kmer_end=1;
 }
 
 static TrieNode* trie_search_node(TrieNode* root, const char* kmer){
@@ -64,8 +65,9 @@ static TrieNode* trie_search_node(TrieNode* root, const char* kmer){
     for(size_t i=0; i<len; i++){
        int index=dna_to_index(kmer[i]);
        if((current->children[index])==NULL){
-          return NULL;
-          current=current->children[index];
+        current=current->children[index];
+        return NULL;
+          
        }
     }
     if(current && current->kmer_end){

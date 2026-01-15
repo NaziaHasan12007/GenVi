@@ -60,7 +60,13 @@ static void calculate_histogram(unsigned long*coverage_map,long genome_length,do
     long max_bin_index=HISTOGRAM_BINS-1;
     for(long i=0;i<genome_length;i++){
         unsigned long coverage=coverage_map[i];
-        int bin_index=coverage/HISTOGRAM_BINS;
+        int bin_index;
+        if(coverage>HISTOGRAM_BINS){
+            bin_index=HISTOGRAM_BINS;
+        }
+        else{
+            bin_index=coverage;
+        }
         if(bin_index>max_bin_index){
             bin_index=max_bin_index;
         }

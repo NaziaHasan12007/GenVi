@@ -3,6 +3,6 @@
 
 #include "basic.h" 
 
-int run_dp_sw(const char* sample_seq, const char* genome_seq);
+int run_dp_sw(const char* read, const char* genome_segment, int read_len, int max_window_len, int* buf_pre, int* buf_cur);
 
-#endif 
+#endif

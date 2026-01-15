@@ -1,58 +1,32 @@
 #include "aligner.h"
+#include <string.h>
+#include <stdlib.h>
 
-static int max(int a, int b, int c, int d){
-    int max=a;
-    if(b>max){
-        max=b;
-    }
-    if(c>max){
-        max=c;
-    }
-    if(d>max){
-        max=d;
-    }
-    return max;
-}
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
-int run_dp_sw(const char* sample_seq, const char* genome_seq){
-    int sample_len=strlen(sample_seq);
-    int genome_len=strlen(genome_seq);
-    int* pre_row=(int*)calloc(genome_len+1, sizeof(int));
-    int* cur_row=(int*)calloc(genome_len+1, sizeof(int));
-    
-    if(pre_row==NULL || cur_row==NULL){
-        fprintf(stderr, "[Aligner error] calloc failed for DP matrix allocation");
-        free(pre_row);
-        free(cur_row);
-        return 0;
-    }
+int run_dp_sw(const char* read, const char* genome_segment, int read_len, int max_window_len, int* buf_pre, int* buf_cur){
+    int window_len=(int)(read_len*1.1); 
+    if(window_len>max_window_len){
+       window_len=max_window_len;
+    } 
+    memset(buf_pre, 0, (window_len+1)*sizeof(int));
+    memset(buf_cur, 0, (window_len+1)*sizeof(int));
     int max_score=0;
-    int match_mismatch_score;
-    
-    for(int i=1; i<=sample_len; i++){
-        for(int j=1; j<=genome_len; j++){
-            if(sample_seq[i-1]==genome_seq[i-1]){
-               match_mismatch_score=MATCH_SCORE;
-            }
-            else{
-               match_mismatch_score=MISMATCH_PENALTY;
-            }
-            int diagonal_score=pre_row[j-1]+match_mismatch_score;
-            int up_score=pre_row[j]+GAP_OPEN_PENALTY;
-            int left_score=cur_row[j-1]+GAP_OPEN_PENALTY;
-            int score=max(0, diagonal_score, up_score, left_score);
-            cur_row[j]=score;
-            if(score>max_score){
-                max_score=score;
-            }
-
+    for(int i=1; i<=read_len; i++){
+        for(int j=1; j<=window_len; j++){
+            int match=(read[i-1]==genome_segment[j-1])?MATCH_SCORE:MISMATCH_PENALTY;
+            int diag=buf_pre[j-1]+match;
+            int up=buf_pre[j]+GAP_OPEN_PENALTY;
+            int left=buf_cur[j-1]+GAP_OPEN_PENALTY;
+            
+            int score=MAX(0, MAX(diag, MAX(up, left)));
+            
+            buf_cur[j]=score;
+            if (score > max_score) max_score = score;
         }
-        int* temp=pre_row;
-        pre_row=cur_row;
-        cur_row=temp;
+        int* temp=buf_pre; 
+        buf_pre=buf_cur; 
+        buf_cur=temp;
     }
-    free(pre_row);
-    free(cur_row);
     return max_score;
-
 }
