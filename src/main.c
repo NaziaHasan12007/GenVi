@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
     float clean_read_percentage=(float)(((double)clean_reads/statistics->total_reads_processed)*100);
     printf("[Phase 2&3] Completed: FASTQ Processing Completed. Found %f%% Valid Reads\n\n", clean_read_percentage);
     printf("Genomic Statistics\n");
-    printf("========================");
+    printf("========================\n");
     printf("Genome Length: %ld\n", statistics->genome_length);
     printf("Total Reads Processed: %ld\n", statistics->total_reads_processed);
     printf("Total Reads Aligned: %ld\n", statistics->total_reads_aligned);
