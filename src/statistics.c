@@ -52,7 +52,9 @@ static double calculate_gc_content(const char*genome_string,long genome_length){
     return (double)gc_count/genome_length*100.0;
 }
 
-static void calculate_histogram(unsigned long*coverage_map,long genome_length,double*histogram_out){
+//#include <stdio.h>
+
+static void calculate_histogram(unsigned long *coverage_map,long genome_length,double *histogram_out){
     if(genome_length==0){
         return;
     }
@@ -61,19 +63,31 @@ static void calculate_histogram(unsigned long*coverage_map,long genome_length,do
     for(long i=0;i<genome_length;i++){
         unsigned long coverage=coverage_map[i];
         int bin_index;
-        if(coverage>HISTOGRAM_BINS){
-            bin_index=HISTOGRAM_BINS;
+
+        if(coverage>=HISTOGRAM_BINS){
+            bin_index=max_bin_index;
         }
         else{
-            bin_index=coverage;
-        }
-        if(bin_index>max_bin_index){
-            bin_index=max_bin_index;
+            bin_index=(int)coverage;
         }
         histogram_counts[bin_index]++;
     }
+    printf("\nCoverage Histogram:\n");
+    printf("-------------------\n");
     for(int i=0;i<HISTOGRAM_BINS;i++){
-        histogram_out[i]=(double)histogram_counts[i]/genome_length*100.0;
+        double percentage=(double)histogram_counts[i]/genome_length*100.0;
+        histogram_out[i]=percentage;
+        if(i==max_bin_index){
+            printf("%2d+  | ",i);
+        }
+        else{
+            printf("%2d   | ",i);
+        }
+        int bar_len=histogram_counts[i]/(genome_length/50+1);
+        for(int j=0;j<bar_len;j++){
+            putchar('#');
+        }
+        printf(" (%ld, %.2f%%)\n",histogram_counts[i],percentage);
     }
 }
 
