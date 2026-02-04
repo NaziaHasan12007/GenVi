@@ -52,8 +52,6 @@ static double calculate_gc_content(const char*genome_string,long genome_length){
     return (double)gc_count/genome_length*100.0;
 }
 
-//#include <stdio.h>
-
 static void calculate_histogram(unsigned long *coverage_map,long genome_length,double *histogram_out){
     if(genome_length==0){
         return;
