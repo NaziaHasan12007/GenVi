@@ -1,28 +1,21 @@
 #ifndef ECO_EFFICIENCY_H
 #define ECO_EFFICIENCY_H
+#include "statistics.h" 
 #include <time.h>
 #ifndef MAX_LINE_LENGTH
-#define MAX_LINE_LENGTH 1024
+#define MAX_LINE_LENGTH 2048
 #endif
-typedef struct GenomicStats GenomicStats;
 
 typedef struct {
     double total_kwh;                 
     double total_carbon_kg;            
     double average_temp_celsius;       
     int    sensor_readings_count;     
-    int    skipped_rows;              
+    int    skipped_rows;  
+    double carbon_intensity;            
 } CarbonReport;
-CarbonReport calculate_carbon_footprint(
-    const char *sensor_file,
-    const char *emission_file,
-    const char *start_time,
-    const char *end_time
-);
+CarbonReport calculate_carbon_footprint( const char *sensor_file, const char *emmission_file, const char *start_time, const char *end_time);
 
-void print_final_report(
-    const GenomicStats *stats,
-    const CarbonReport *report
-);
+void print_final_report(const GenomicStats *stats, const CarbonReport *report);
 
 #endif

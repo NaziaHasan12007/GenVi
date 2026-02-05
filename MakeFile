@@ -5,6 +5,7 @@ TARGET = bin/genvi
 SRCDIR = src
 OBJDIR = obj
 INCDIR = include
+
 SRCS = $(SRCDIR)/main.c \
        $(SRCDIR)/parser.c \
        $(SRCDIR)/trimmer.c \
@@ -12,21 +13,28 @@ SRCS = $(SRCDIR)/main.c \
        $(SRCDIR)/hashtable.c \
        $(SRCDIR)/aligner.c \
        $(SRCDIR)/mapper.c \
-       $(SRCDIR)/statistics.c
+       $(SRCDIR)/statistics.c \
+       $(SRCDIR)/eco_efficiency.c
+
 OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 DEPS = $(wildcard $(INCDIR)/*.h)
+
 all: $(TARGET)
+
 $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 	@echo "Build complete! Run with: ./$(TARGET)"
+
 $(OBJDIR)/%.o: $(SRCDIR)/%.c $(DEPS)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
 	@rm -rf $(OBJDIR) $(TARGET)
 	@echo "Project cleaned."
+
 run: all
-	@./$(TARGET) data/reference.fna data/sample_reads.fastq 2025-10-29T10:00:00 2025-10-29T10:15:00
+	@./$(TARGET) data/reference.fna data/sample_reads.fastq data/sensor.csv data/emission.csv 2025-10-29T10:00:00 2025-10-29T10:15:00
 
 .PHONY: all clean run
