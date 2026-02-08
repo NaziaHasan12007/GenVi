@@ -7,6 +7,7 @@
 #include "mapper.h"
 #include "statistics.h"
 #include "eco_efficiency.h"
+#include "recommendation.h"
 
 void print_warnings(){
     fprintf(stderr, "ERROR: Invalid Arguments.\n\n");
@@ -56,7 +57,17 @@ int main(int argc, char *argv[]){
         free(genome_string);
         return 1;
     }
-    print_final_report(stats, &report);
+   
+    ParameterNode node;
+    node.timestamp=time(NULL);
+    node.forecast_carbon_intensity=report.carbon_intensity;
+    node.forecast_temparature_c=report.average_temp_celsius;
+    node.urgency=0;  
+    Weights prefs={.carbon_weight  = 0.6, .cooling_weight = 0.3, .urgency_weight = 0.1};
+    Recommendation rec;
+    get_parameter_recommendation(&node, 1, prefs, &rec);
+
+    print_final_report(stats, &report, &rec);
     ht_free(genome_index);
     free(genome_string);
     free(stats);

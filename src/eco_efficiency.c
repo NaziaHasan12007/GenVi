@@ -184,10 +184,11 @@ CarbonReport calculate_carbon_footprint(const char *sensor_file, const char* emm
     return report;
 }
 
-void print_final_report(const GenomicStats *stats, const CarbonReport *report){
+void print_final_report(const GenomicStats *stats, const CarbonReport *report, const Recommendation *rec){
    if(!stats || !report){
       return;
     } 
+    printf("[Phase 4&5] Starting: Genome statistics, Carbon report, Eco-efficiciency score and Recomendations...\n\n");
     printf("\n========== GENOMIC STATISTICS ==========\n\n");
     printf("Genome Length: %ld\n", stats->genome_length);
     printf("Total Reads Processed: %ld\n", stats->total_reads_processed);
@@ -217,6 +218,14 @@ void print_final_report(const GenomicStats *stats, const CarbonReport *report){
     } else {
         printf("ECO-EFFICIENCY SCORE: N/A (zero carbon)\n");
     }
+    if(rec!=NULL) {
+        printf("----- Environmental Recommendation -----\n");
+        printf("Predicted Score        : %.4f (lower is better)\n", rec->predicted_score);
+        printf("Suggested Carbon Level : %.2f gCO2/kWh\n", rec->carbon_reccomedation);
+        printf("Suggested Cooling Adj. : %.2f C\n", rec->cooling_reccomedation);
+        printf("Allowed Delay (hrs)    : %d\n\n", rec->allowed_delay);
+    }
+    printf("[Phase 4&5] Completed : Genome statistics, Carbon report, Eco-efficiciency score and Recomendations");
     printf("Done Computing!! See you again!\n");
     printf("\n==========================================\n");
 }
