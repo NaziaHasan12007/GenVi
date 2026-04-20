@@ -1,8 +1,10 @@
 #include "eco_efficiency.h"
 #include "statistics.h"
 #include <assert.h>
+#include "colors.h"
 
 #define MAX_INTERVALS 128
+#define RESET "\e[0m"
 
 typedef struct {
     time_t start;
@@ -188,9 +190,9 @@ void print_final_report(const GenomicStats *stats, const CarbonReport *report, c
    if(!stats || !report){
       return;
     } 
-    printf("[Phase 4&5] Starting: Genome statistics, Carbon report, Eco-efficiciency score and Recomendations...\n\n");
-    printf("\n========== GENOMIC STATISTICS ==========\n\n");
-    printf("Genome Length: %ld\n", stats->genome_length);
+    printf(CYN"[Phase 4&5] Starting: Genome statistics, Carbon report, Eco-efficiciency score and Recomendations...\n\n"RESET);
+    printf(BBLU"\n========== GENOMIC STATISTICS ==========\n\n"RESET);
+    printf(WHT"Genome Length: %ld\n", stats->genome_length);
     printf("Total Reads Processed: %ld\n", stats->total_reads_processed);
     printf("Total Reads Aligned: %ld\n", stats->total_reads_aligned);
     printf("Reads Discarded or Failed to Map: %ld\n", stats->total_reads_trimmed + stats->total_reads_failed_to_map);
@@ -201,31 +203,31 @@ void print_final_report(const GenomicStats *stats, const CarbonReport *report, c
     printf("Coverage Breadth: %.2f%%\n", stats->genome_breadth_percent);
     printf("GC Content: %.2f%%\n", stats->gc_content_percent);
     printf("N50 Metric: %ld\n", stats->n50_metric);
-    printf("Coverage Q1: %.2f\nQ3: %.2f\nIQR: %.2f\n", stats->coverage_q1, stats->coverage_q3, stats->coverage_iqr);
+    printf("Coverage Q1: %.2f\nQ3: %.2f\nIQR: %.2f\n"RESET, stats->coverage_q1, stats->coverage_q3, stats->coverage_iqr);
 
-    printf("\n========== ECO-EFFICIENCY REPORT ==========\n\n");
-    printf("Energy Consumed:      %.2f kWh\n", report->total_kwh);
+    printf(BBLU"\n========== ECO-EFFICIENCY REPORT ==========\n\n"RESET);
+    printf(WHT"Energy Consumed:      %.2f kWh\n", report->total_kwh);
     printf("Carbon Emitted:       %.3f kg CO₂\n", report->total_carbon_kg);
     printf("Carbon Intensity:     %.3f kg CO₂/kWh\n", report->carbon_intensity);
     printf("Avg Lab Temperature:  %.1f °C\n", report->average_temp_celsius);
-    printf("Skipped Sensor Rows:  %d\n\n", report->skipped_rows);
+    printf("Skipped Sensor Rows:  %d\n\n"RESET, report->skipped_rows);
 
     if(report->total_carbon_kg > 0.0){
         double eco_score = stats->mean_coverage / report->total_carbon_kg;
-        printf("------------------------------------------\n");
+        printf(GRN"------------------------------------------\n");
         printf("ECO-EFFICIENCY SCORE: %.2f x/kg\n", eco_score);
-        printf("------------------------------------------\n");
+        printf("------------------------------------------\n"RESET);
     } else {
-        printf("ECO-EFFICIENCY SCORE: N/A (zero carbon)\n");
+        printf(RED"ECO-EFFICIENCY SCORE: N/A (zero carbon)\n"RESET);
     }
     if(rec!=NULL) {
-        printf("----- Environmental Recommendation -----\n");
-        printf("Predicted Score        : %.4f (lower is better)\n", rec->predicted_score);
+        printf(BBLU"==========Environmental Recommendation ===========\n\n"RESET);
+        printf(WHT"Predicted Score        : %.4f (lower is better)\n", rec->predicted_score);
         printf("Suggested Carbon Level : %.2f gCO2/kWh\n", rec->carbon_reccomedation);
         printf("Suggested Cooling Adj. : %.2f C\n", rec->cooling_reccomedation);
-        printf("Allowed Delay (hrs)    : %d\n\n", rec->allowed_delay);
+        printf("Allowed Delay (hrs)    : %d\n\n"RESET, rec->allowed_delay);
     }
-    printf("[Phase 4&5] Completed : Genome statistics, Carbon report, Eco-efficiciency score and Recomendations");
-    printf("Done Computing!! See you again!\n");
-    printf("\n==========================================\n");
+    printf(GRN"[Phase 4&5] Completed : Genome statistics, Carbon report, Eco-efficiciency score and Recomendations"RESET);
+    printf(YEL"Done Computing!! See you again!\n");
+    printf("\n==========================================\n"RESET);
 }

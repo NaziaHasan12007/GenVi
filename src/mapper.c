@@ -3,24 +3,26 @@
 #include<stdlib.h>
 #include<string.h>
 #include<math.h>
+#include "colors.h"
 
 #define MAX_SEED_HITS 50      
 #define REPETITIVE_SEED_THRESHOLD 20 
 #define EXTENSION_MARGIN 1.1   
 #define MAX_WINDOW_SIZE 2000
+#define RESET "\e[0m"
 
 HashTable* build_genome_index(const char* genome_string){
-    printf("[Phase 1]Creating genome index...\n");
+    //printf(CYN"[Phase 1]Creating genome index...\n"RESET);
     HashTable* index=ht_create();  
     if(!index){
-        fprintf(stderr, "[Phase 1]Failed to create hash table.\n");
+        fprintf(stderr, RED"[Phase 1]Failed to create hash table.\n"RESET);
         return NULL;
     }
     long genome_length=strlen(genome_string);
     const int k=SEED_KMER_SIZE;
     char* kmer_buffer=malloc(k+1);
     if(!kmer_buffer){
-        fprintf(stderr, "[Phase 1] Failed to allocate kmer buffer.\n");
+        fprintf(stderr, RED"[Phase 1] Failed to allocate kmer buffer.\n"RESET);
         ht_free(index);
         return NULL;
     }
@@ -35,11 +37,11 @@ HashTable* build_genome_index(const char* genome_string){
         }
         ht_insert(index, kmer_buffer, (unsigned long)i);
         if(i>0 && i%100000==0){
-            printf("[Phase 1]Indexed %ld/%ld k-mers (%.2f%%)\r", i, genome_length - k, (double)i / (genome_length - k) * 100.0);
+            printf(CYN"[Phase 1]Indexed %ld/%ld k-mers (%.2f%%)\r" RESET, i, genome_length - k, (double)i / (genome_length - k) * 100.0);
             fflush(stdout);
         }
     }
-    printf("\n[Phase 1] Genome indexing complete. %lu repetitive seeds skipped.\n", repetitive_kmers);
+    printf(GRN"\n[Phase 1] Genome indexing complete. %lu repetitive seeds skipped.\n"RESET, repetitive_kmers);
     free(kmer_buffer);
     return index;
 }
@@ -51,7 +53,7 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
     } 
     unsigned long* coverage_map=(unsigned long*)calloc(genome_length, sizeof(unsigned long));
     if(!coverage_map){
-        fprintf(stderr, "[Mapper ERROR]Failed to allocate coverage_map\n");
+        fprintf(stderr, RED"[Mapper ERROR]Failed to allocate coverage_map\n"RESET);
         fclose(fp);
         return NULL;
     }
@@ -64,7 +66,7 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
     char* seed_buffer=malloc(k+1);
 
     if(!seed_buffer){
-        fprintf(stderr, "[Mapper ERROR] Failed to allocate seed_buffer\n");
+        fprintf(stderr, RED"[Mapper ERROR] Failed to allocate seed_buffer\n"RESET);
         free(coverage_map);
         fclose(fp);
         return NULL;
@@ -73,7 +75,7 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
     int* buf_pre=malloc((MAX_WINDOW_SIZE+1)*sizeof(int));
     int* buf_cur=malloc((MAX_WINDOW_SIZE+1)*sizeof(int));
     if(!buf_pre || !buf_cur){
-        fprintf(stderr, "[Mapper ERROR] Failed to allocate DP buffers\n");
+        fprintf(stderr, RED"[Mapper ERROR] Failed to allocate DP buffers\n"RESET);
         free(seed_buffer);
         free(coverage_map);
         fclose(fp);
@@ -146,7 +148,7 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
             reads_failed_map++;
         }
         if (total_reads%10000==0) {
-            printf("[Mapper] Processed %ld reads... \r", total_reads);
+            printf(CYN"[Mapper] Processed %ld reads... \r"RESET, total_reads);
             fflush(stdout);
         }
     }
@@ -154,8 +156,8 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
     free(buf_pre);
     free(buf_cur);
     free(seed_buffer);
-    printf("\n[Mapper] Completed processing %ld reads.\n", total_reads);
-    printf("[Mapper] Reads discarded: %ld, failed to map: %ld\n", reads_discarded, reads_failed_map);
+    printf(GRN"\n[Mapper] Completed processing %ld reads.\n"RESET, total_reads);
+    printf(WHT"[Mapper] Reads discarded: %ld, failed to map: %ld\n"RESET, reads_discarded, reads_failed_map);
     GenomicStats* stats=calculate_genomic_stats(coverage_map, genome_length, total_reads, reads_discarded, reads_failed_map, total_quality_sum, total_bases_sequenced, genome_string);
     free(coverage_map);
     return stats;

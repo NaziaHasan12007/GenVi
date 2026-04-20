@@ -14,7 +14,8 @@ SRCS = $(SRCDIR)/main.c \
        $(SRCDIR)/aligner.c \
        $(SRCDIR)/mapper.c \
        $(SRCDIR)/statistics.c \
-       $(SRCDIR)/eco_efficiency.c
+       $(SRCDIR)/eco_efficiency.c\
+	   $(SRCDIR)/recommendation.c
 
 OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 DEPS = $(wildcard $(INCDIR)/*.h)
