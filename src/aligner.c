@@ -1,6 +1,6 @@
-#include "aligner.h"
-#include <string.h>
-#include <stdlib.h>
+#include"aligner.h"
+#include<string.h>
+#include<stdlib.h>
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 

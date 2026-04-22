@@ -1,6 +1,8 @@
 CC = gcc
-CFLAGS = -g -Wall -Iinclude
-LDFLAGS = -lm
+# Added -pthread to CFLAGS for thread safety during compilation
+CFLAGS = -g -Wall -Iinclude -pthread
+# Added -lpthread to LDFLAGS to link the POSIX threads library
+LDFLAGS = -lm -lpthread
 TARGET = bin/genvi
 SRCDIR = src
 OBJDIR = obj
@@ -15,7 +17,7 @@ SRCS = $(SRCDIR)/main.c \
        $(SRCDIR)/mapper.c \
        $(SRCDIR)/statistics.c \
        $(SRCDIR)/eco_efficiency.c\
-	   $(SRCDIR)/recommendation.c
+       $(SRCDIR)/recommendation.c
 
 OBJS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
 DEPS = $(wildcard $(INCDIR)/*.h)
@@ -35,6 +37,7 @@ clean:
 	@rm -rf $(OBJDIR) $(TARGET)
 	@echo "Project cleaned."
 
+# Note: Ensure your sample data paths are correct for your BSSE-16 project structure
 run: all
 	@./$(TARGET) data/reference.fna data/sample_reads.fastq data/sensor.csv data/emission.csv 2025-10-29T10:00:00 2025-10-29T10:15:00
 

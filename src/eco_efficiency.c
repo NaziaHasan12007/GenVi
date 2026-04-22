@@ -1,12 +1,12 @@
-#include "eco_efficiency.h"
-#include "statistics.h"
-#include <assert.h>
-#include "colors.h"
+#include"eco_efficiency.h"
+#include"statistics.h"
+#include<assert.h>
+#include"colors.h"
 
 #define MAX_INTERVALS 128
 #define RESET "\e[0m"
 
-typedef struct {
+typedef struct{
     time_t start;
     time_t end;
     double kg_co2_per_kwh;
@@ -18,7 +18,7 @@ static double lookup_emission_factor(time_t t, const EmissionInterval *arr, int 
 
 static time_t parse_timestamp_utc(const char *s){
     struct tm tm={0};
-    if (!strptime(s, "%Y-%m-%dT%H:%M:%S", &tm)){
+    if(!strptime(s, "%Y-%m-%dT%H:%M:%S", &tm)){
        return (time_t)-1;
     }
    tm.tm_isdst=-1;
@@ -83,8 +83,7 @@ static double lookup_emission_factor(time_t t, const EmissionInterval *arr, int 
     return -1.0;
 }
 
-CarbonReport calculate_carbon_footprint(const char *sensor_file, const char* emmission_file, const char *start_time, const char *end_time)
-{
+CarbonReport calculate_carbon_footprint(const char *sensor_file, const char* emmission_file, const char *start_time, const char *end_time){
     CarbonReport report={0};
 
     time_t start_t=parse_timestamp_utc(start_time);
@@ -187,7 +186,7 @@ CarbonReport calculate_carbon_footprint(const char *sensor_file, const char* emm
 }
 
 void print_final_report(const GenomicStats *stats, const CarbonReport *report, const Recommendation *rec){
-   if(!stats || !report){
+   if(!stats||!report){
       return;
     } 
     printf(CYN"[Phase 4&5] Starting: Genome statistics, Carbon report, Eco-efficiciency score and Recomendations...\n\n"RESET);
@@ -212,15 +211,34 @@ void print_final_report(const GenomicStats *stats, const CarbonReport *report, c
     printf("Avg Lab Temperature:  %.1f °C\n", report->average_temp_celsius);
     printf("Skipped Sensor Rows:  %d\n\n"RESET, report->skipped_rows);
 
-    if(report->total_carbon_kg > 0.0){
+    if(report->total_carbon_kg>0.0){
         double eco_score = stats->mean_coverage / report->total_carbon_kg;
         printf(GRN"------------------------------------------\n");
         printf("ECO-EFFICIENCY SCORE: %.2f x/kg\n", eco_score);
         printf("------------------------------------------\n"RESET);
-    } else {
+    } 
+    else {
         printf(RED"ECO-EFFICIENCY SCORE: N/A (zero carbon)\n"RESET);
     }
     if(rec!=NULL) {
+        if(rec->is_valid==0) {
+        printf(BBLU"========== Environmental Recommendation ===========\n\n"RESET);
+        printf("No suitable recommendation found under current conditions.\n\n");
+         if(rec->culprit==1) {
+            printf("Primary cause: High carbon intensity across all available options.\n");
+            printf("Suggestion: Reduce carbon threshold or shift time window.\n");
+        }
+        else if(rec->culprit==2) {
+            printf("Primary cause: Unfavorable temperature conditions increasing cooling cost.\n");
+            printf("Suggestion: Allow wider temperature range or adjust cooling weight.\n");
+        }
+        else {
+            printf("Primary cause: High urgency constraint limiting flexibility.\n");
+            printf("Suggestion: Relax urgency requirement if possible.\n");
+        }
+        printf(RESET);
+        return;
+    }
         printf(BBLU"==========Environmental Recommendation ===========\n\n"RESET);
         printf(WHT"Predicted Score        : %.4f (lower is better)\n", rec->predicted_score);
         printf("Suggested Carbon Level : %.2f gCO2/kWh\n", rec->carbon_reccomedation);

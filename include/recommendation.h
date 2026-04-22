@@ -23,6 +23,8 @@ typedef struct{
    double carbon_reccomedation;
    double cooling_reccomedation;
    int allowed_delay;
+   int is_valid;
+   int culprit;
 }Recommendation;
 
 void get_parameter_recommendation(const ParameterNode *nodes, int count, Weights prefs, Recommendation *out_rec);

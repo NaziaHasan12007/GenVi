@@ -1,7 +1,7 @@
-#include "parser.h"
+#include"parser.h"
 
 char* load_genome_from_fasta(const char* filename, long* genome_length){
-    FILE* fp= fopen(filename, "r");
+    FILE* fp=fopen(filename, "r");
     if(fp==NULL){
         fprintf(stderr, "[Parser Error] Can't open FASTA file: %s\n", filename);
         return NULL;
