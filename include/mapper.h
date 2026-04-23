@@ -15,7 +15,7 @@
 #define REPETITIVE_SEED_THRESHOLD 20 
 #define EXTENSION_MARGIN 1.1   
 #define MAX_WINDOW_SIZE 2000
-#define NUM_THREADS 6
+#define NUM_THREADS 4
 #define BATCH_SIZE 5000 
 #define RESET "\e[0m"
 

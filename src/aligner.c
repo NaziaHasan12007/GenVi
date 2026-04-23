@@ -22,7 +22,9 @@ int run_dp_sw(const char* read, const char* genome_segment, int read_len, int ma
             int score=MAX(0, MAX(diag, MAX(up, left)));
             
             buf_cur[j]=score;
-            if (score > max_score) max_score = score;
+            if (score>max_score){
+                max_score = score;
+            }
         }
         int* temp=buf_pre; 
         buf_pre=buf_cur; 

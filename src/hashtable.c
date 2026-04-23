@@ -55,7 +55,7 @@ void ht_free(HashTable* table){
             free(node->key);         
             free(node->locations);   
             free(node);              
-            node = next;
+            node=next;
         }
     }
     free(table->locks);

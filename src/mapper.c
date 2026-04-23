@@ -7,12 +7,12 @@ void* indexing_worker(void* arg) {
 
     for (long i=data->start; i<=data->end; i++){
        
-        strncpy(kmer, data->genome_string + i, k);
+        strncpy(kmer, data->genome_string+i, k);
         kmer[k]='\0';
         
         ht_insert(data->index, kmer, (unsigned long)i);
         
-        if (i>0&&i%200000==0) {
+        if(i>0&&i%200000==0){
             printf(CYN "[Phase 1] Indexing progress: %ld bases\r" RESET, i);
             fflush(stdout);
         }
@@ -20,10 +20,12 @@ void* indexing_worker(void* arg) {
     return NULL;
 }
 
-HashTable* build_genome_index(const char* genome_string) {
+HashTable* build_genome_index(const char* genome_string){
     printf(CYN "[Phase 1] Initializing multithreaded indexing...\n" RESET);
     HashTable* index=ht_create();
-    if (!index) return NULL;
+    if(!index){
+      return NULL;
+    } 
 
     long genome_length=strlen(genome_string);
     pthread_t threads[NUM_THREADS];
@@ -69,29 +71,34 @@ void* mapper_worker(void* arg) {
         int best_score=0;
         long best_loc=-1;
         int max_window_len=(int)(trimmed_len*EXTENSION_MARGIN);
-        if(max_window_len>MAX_WINDOW_SIZE)max_window_len=MAX_WINDOW_SIZE;
+        if(max_window_len>MAX_WINDOW_SIZE){
+            max_window_len=MAX_WINDOW_SIZE;
+        }
 
-        for(int i=0; i<=trimmed_len-k; i+=k) {
+        for(int i=0; i<=trimmed_len-k; i+=k){
             strncpy(seed_buffer, sequence+i, k);
             seed_buffer[k]='\0';
 
             Ht_Node* hits=ht_search(data->index, seed_buffer);
-            if(!hits||hits->location_count>REPETITIVE_SEED_THRESHOLD) continue;
+            if(!hits||hits->location_count>REPETITIVE_SEED_THRESHOLD){
+              continue;
+            }
 
-            for(size_t h = 0; h < hits->location_count && h < MAX_SEED_HITS; h++) {
-                long loc = hits->locations[h];
-                long genome_start = loc - i;
+            for(size_t h=0; h<hits->location_count&&h<MAX_SEED_HITS; h++){
+                long loc=hits->locations[h];
+                long genome_start=loc-i;
 
-                if(genome_start < 0 || genome_start + max_window_len > data->genome_length)
+                if(genome_start<0||genome_start+max_window_len>data->genome_length){
                     continue;
-
-                int score = run_dp_sw(sequence, data->genome_string + genome_start, trimmed_len, max_window_len, buf_pre, buf_cur);
-                if(score > best_score) {
-                    best_score = score;
-                    best_loc = genome_start;
                 }
-                
-                if(best_score > (trimmed_len * MATCH_SCORE * 0.95)) break;
+                int score=run_dp_sw(sequence, data->genome_string + genome_start, trimmed_len, max_window_len, buf_pre, buf_cur);
+                if(score>best_score){
+                    best_score=score;
+                    best_loc=genome_start;
+                }   
+                if(best_score>(trimmed_len * MATCH_SCORE * 0.95)){
+                    break;
+                }
             }
         }
 
@@ -113,7 +120,7 @@ void* mapper_worker(void* arg) {
     return NULL;
 }
 
-GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index, const char* genome_string, long genome_length) {
+GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index, const char* genome_string, long genome_length){
 
     FILE* fp=open_fastq_file(fastq_filename);
     if(!fp){ 
@@ -126,7 +133,7 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
 
     printf(CYN "[Phase 2&3] Starting multithreaded mapping...\n" RESET);
 
-    while(1) {
+    while(1){
         int loaded=0;
         char h[MAX_LINE_LENGTH], p[MAX_LINE_LENGTH], s[MAX_LINE_LENGTH], q[MAX_LINE_LENGTH];
         
@@ -136,7 +143,9 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
             loaded++;
         }
 
-        if(loaded==0) break;
+        if(loaded==0){
+          break;
+        } 
 
         pthread_t threads[NUM_THREADS];
         ThreadData tdata[NUM_THREADS];
