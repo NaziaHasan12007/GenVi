@@ -96,16 +96,16 @@ void* mapper_worker(void* arg) {
                     best_score=score;
                     best_loc=genome_start;
                 }   
-                if(best_score>(trimmed_len * MATCH_SCORE * 0.95)){
+                if(best_score>(trimmed_len*MATCH_SCORE*0.95)){
                     break;
                 }
             }
         }
 
-        const int threshold = (int)(trimmed_len * MATCH_SCORE * 0.7);
-        if(best_score >= threshold && best_loc >= 0) {
-            for(int j = 0; j < trimmed_len; j++) {
-                if(best_loc + j < data->genome_length) {
+        const int threshold=(int)(trimmed_len*MATCH_SCORE*0.7);
+        if(best_score>=threshold && best_loc >= 0) {
+            for(int j=0; j<trimmed_len; j++){
+                if(best_loc+j<data->genome_length){
                     data->local_coverage[best_loc + j]++;
                 }
             }
@@ -126,8 +126,8 @@ GenomicStats* process_and_map_reads(const char* fastq_filename, HashTable* index
     if(!fp){ 
         return NULL;
     }
-    unsigned long* global_coverage = calloc(genome_length, sizeof(unsigned long));
-    Read* batch=malloc(sizeof(Read) * BATCH_SIZE);
+    unsigned long* global_coverage=calloc(genome_length, sizeof(unsigned long));
+    Read* batch=malloc(sizeof(Read)*BATCH_SIZE);
     
     long total_processed=0, total_discarded=0, total_failed=0;
 

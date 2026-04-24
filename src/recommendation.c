@@ -23,12 +23,7 @@ static double calculate_cooling_penalty(double temp_c) {
     return 0.0;
 }
 
-void get_parameter_recommendation(
-    const ParameterNode *nodes, 
-    int count, 
-    Weights prefs, 
-    Recommendation *out_rec
-){
+void get_parameter_recommendation(const ParameterNode *nodes, int count, Weights prefs, Recommendation *out_rec){
     if(count<=0||!out_rec){
         return;
     }
@@ -46,7 +41,7 @@ void get_parameter_recommendation(
         double urgency_norm=nodes[i].urgency?1.0:0.0;
 
         double score=carbon_norm*prefs.carbon_weight+cooling_norm*prefs.cooling_weight+urgency_norm*prefs.urgency_weight;
-        carbon_component=carbon_norm * prefs.carbon_weight;
+        carbon_component=carbon_norm*prefs.carbon_weight;
         cooling_component=cooling_norm*prefs.cooling_weight;
         urgency_component=urgency_norm*prefs.urgency_weight;
 
