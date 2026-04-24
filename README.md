@@ -91,3 +91,9 @@ gcc -O3 *.c -o genvi -lpthread
 **Nazia Hassan**  
 Software Engineering Student  
 University of Dhaka
+
+Copyright (c) 2026 Nazia Hassan
+
+This project is submitted for academic evaluation only.
+All rights reserved.
+This code may not be reused, redistributed, or modified without permission from the author, except for academic review purposes by instructors and evaluators.
